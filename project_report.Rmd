@@ -1,0 +1,287 @@
+---
+title: 'DS202: Final Project Report'
+author: 'Group 4: MyTien Kien, Tanner Dunn, Saketh Jonnadula, Ryan Pate'
+date: "4/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### **Description of Data**
+https://www.kaggle.com/yamaerenay/spotify-dataset-19212020-160k-tracks/version/10
+
+Our data was collected from Spotify by self-taught, German data scientist, Yamac Eren Ay. Ay collected this data by using the audio features and search query Spotify has to offer. The dataset includes over 175,000 songs and most of these songs include songs made back to 1922 up until 2021. With that, he created 19 variables, most of them being numerical, to help describe each and every song. 
+
+These variables may include: danceability, valence, liveness, loudness, acousticness, energy... and so on.
+
+Out of those variables, we used "popularity" the most, to help us define the success of a song in the music industry (through the eyes of Spotify). We were given 5 different .csv files that were sorted based on year, genre and more.     
+
+
+### **Questions Raised**
+
+- Does the popularity depend on the year it was released?
+- Does the popularity of a song depend on the danceability or energy?
+- What were the 5 most popular songs in 2020? How do these songs compare to the top 5 in 2010?
+- Analyze how song trends such a danceability, energy, loudness, etc... changed throughout each year.
+- What is the relationship between the acousticness and the tempo of a song?
+- Are explicit songs more popular than non-explicit songs?
+- Who are the most popular one hit wonders?
+- How has Post Malone's (Tanner's favorite artist) popularity changed over the past few years?
+- What are/were the most popular genres in the past century?     
+
+   
+### **Pipeline for Obtaining/Cleaning Dataset**
+As mentioned above, we received this dataset from kaggle, an online community full of data scientists and machine learning practitioners. The dataset is an old version (it was the most recent one when we found it), so it only includes songs up to early 2021 (January), with over 175,000 songs.
+
+For cleaning, we haven't had to do much besides dropping the NA values for every .csv file we were given. The csv files we were given were ordered by a specific variable, such as, song ID, year, genre and artist. Since we each did our own analysis, we all cleaned it specific to what we needed for our question.
+
+
+### **Data Wrangling and Visualization**
+As far as data wrangling and data visualization goes, We each did our own as needed for our individual problems. We made sure
+to explain this out below as it pertained to each question. For a quick summary, common practices included using group_by, summarizing 
+popularity as the "mean(popularity)" and filtering as necessary. Visualization wise our group utilized many techniques such as barplots,
+histograms, line graphs, tables and many more. 
+
+
+### **Answers for Questions Raised**
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+main <- readr::read_csv('./excel_files/data.csv')
+by_artist <- readr::read_csv('./excel_files/data_by_artist.csv')
+by_genre <- readr::read_csv('./excel_files/data_by_genres.csv')
+by_year <- readr::read_csv('./excel_files/data_by_year.csv')
+main <- drop_na(main)
+
+by_year <- drop_na(by_year)
+by_genre <- drop_na(by_genre)
+```
+
+
+**1. Does the popularity depend on the year it was released?**
+```{r message=FALSE, warning=FALSE}
+q1 <- by_year %>% 
+        group_by(year) %>%
+        summarize(popularity = mean(popularity)) %>% 
+        arrange(desc(popularity)) %>%
+        head(n = 20)
+q1
+```
+  
+Short summary of what you found
+
+  
+**2. Does the popularity of a song depend on the danceability or energy?**
+```{r message=FALSE, warning=FALSE}
+q2 <- main %>% 
+        group_by(popularity) %>%
+        select(popularity, artists, name, danceability, energy) %>%        
+        arrange(desc(popularity)) %>%
+        head(n = 20)
+q2
+```
+  
+Short summary of what you found
+  
+  
+**3. What were the 5 most popular songs in 2020? How do these songs compare to the top 5 in 2010?**
+```{r message=FALSE, warning=FALSE}
+#Top 5 for 2020
+q3_2020 <- main %>%
+        filter(year == 2020) %>%
+        select(year, artists, name, popularity) %>%
+        arrange(desc(popularity)) %>%
+        head(n = 5)
+
+q3_2020
+
+#Top 5 for 2010
+q3_2010 <- main %>%
+        filter(year == 2010) %>%
+        select(year, artists, name, popularity) %>%
+        arrange(desc(popularity)) %>%
+        head(n = 5)
+
+q3_2010
+```
+
+Immediately after the I saw the results, I noticed that the popularity rate in 2020 was much higher than that of 2010. This could mean that the competition is getting much harder in the music industry. The reason why I think it's higher in 2020 was because everyone was in quarantine. Since we stayed home more, a lot of us used music as an escape out during the pandemic.
+
+Another thing I noticed is that 2020 includes a more diverse range of music with Latin songs by artists Bad Bunny and Karol G. This is also another hint that the music industry is only getting more competitive.    
+
+  
+**4. Analyze how song trends such a danceability, energy, loudness, etc... changed throughout each year.**
+```{r message=FALSE, warning=FALSE}
+q4 <- main %>% 
+        group_by(year) %>%
+        summarise(danceability = mean(danceability),
+                  acousticness = mean(acousticness),
+                  energy = mean(energy),
+                  valence = mean(valence),
+                  liveness = mean(liveness))
+q4
+
+
+#Plot for song trends
+q4 <- q4 %>% pivot_longer(danceability:liveness, names_to = 'trend', values_to = 'value')
+
+q4_plot <- q4 %>% 
+        ggplot(aes(x = year, y = value, color = trend)) + geom_line() + 
+        ggtitle("Trends Throughout the Years")
+
+q4_plot
+```
+
+Here, I included 5 different song trends that had the same range for scale. These variables include acousticness, danceability, energy, liveness and valence. With that, I grouped everything by year and plotted these trends.
+
+The first thing you notice here is the acousticness trend. It started off really strong in the 1920's, being the most popular trend. Then, there were some large spikes as years went on, and finally made a huge downfall around 1950. After that, it steadily fell, leading it to be one of the lowest trends today.
+
+On the other hand, energy went on a completely opposite turn. It started off being one of the lowest trends in 920 and steadily rose up to being one of the highest trends today. 
+
+The rest of the trends stayed pretty close to what their value was in 1920. Liveness stayed near 0 for most of this past century while the others, danceability and valence, stayed around 0.50.   
+
+  
+**5. What is the relationship between the acousticness and the tempo of a song?**
+```{r message=FALSE, warning=FALSE}
+q5 <- main[ , c("acousticness", "tempo")]
+    q5 <- q5 %>% 
+    mutate(cuts = cut(tempo, breaks = c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250)))
+    q5 <- q5 [!(q5$tempo==0.000),]
+    q5$cuts <- as.character(q5$cuts)
+    q5$cuts <- factor(q5$cuts, levels=c("(25,50]", "(50,75]", "(75,100]", "(100,125]", "(125,150]", "(150,175]", "(175,200]", "(200,225]", "(225,250]"))
+    ggplot(q5, aes(x=cuts, y=acousticness)) +
+      geom_boxplot() +
+      theme(axis.text.x = element_text(angle=45, hjust=1)) +
+      labs(title="Acousticness vs. Tempo", x="Tempo", y="Acousticness") +
+      theme(plot.title = element_text(size=14, hjust=0.5))
+```
+
+I first created a simple scatterplot for this question, however it was not very informative. I instead created grouped boxplots to show the different acousticnesses at different tempos. The tempo values are group by 25. I had to do a bit of wrangling to make this work the way I wanted. I created a subset of only the acousticness and tempo values, then mutated a new column which put the tempo values into ranged groups. I removed any songs with a tempo of 0, factored the data to order it properly in the visualization, and then created the boxplot.
+
+With this visualization, it does appear that there are some slight trends in this relationship. Songs with a tempo between 25 and 75 are clearly much higher in acousticness than songs between 75 and 200. Interestingly, songs with a very high tempo (between 200 and 250) begin to rise again in acousticness.
+  
+  
+**6. Are explicit songs more popular than non-explicit songs?**
+```{r message=FALSE, warning=FALSE}
+main75 <- subset(main, popularity>=75)
+main75$explicit <- as.character(main75$explicit)
+    
+ggplot(main75, aes(x=popularity, fill=explicit)) + 
+        geom_histogram(binwidth = 1) +
+        labs(title="Popularity of Explicit and Non-Explicit Songs", x="Popularity (between 75 and 100)", y="Count") +
+        theme(plot.title = element_text(size=14, hjust=0.5)) +
+        theme(legend.title = element_blank()) +
+        scale_fill_discrete(labels = c("Non-Explicit", "Explicit"))
+```
+  
+For this question I overlaid the two groups onto a single histogram. This histogram only includes songs with at least a popularity rating of 75 in order to focus on the higher rated content. The explicit ratings also needed to be character arguments in order to function properly in the histogram.
+
+Surprisingly, the non-explicit songs are generally much more popular than the explicit songs. The difference in the popularity decreases as the rating gets higher, becoming quite similar around a popularity rating of 90. The only song with a popularity rating of 100 in this dataset is explicit. 
+
+The reason I expected explicit songs to be overall more popular is likely because of the distribution of this histogram, in that the higher the popularity rating, the larger the proportion of explicit songs being popular.
+  
+  
+**7. Who are the most popular one hit wonders?**
+```{r message=FALSE, warning=FALSE}
+one_hit_wonder <- main %>% 
+        group_by(artists = artists) %>%
+        summarise(Num_track = n(), Popularity = mean(popularity)) %>%
+        filter(Num_track == 1) %>%
+        top_n(5, wt = Popularity)
+
+ggplot(one_hit_wonder, aes(x = reorder(artists, -Popularity), weight = Popularity)) + geom_bar() + coord_cartesian(ylim=c(75,100)) +
+      xlab("Artists") + ylab("Popularity") + ggtitle("Most Popular One Hit Wonders") + coord_flip()
+
+
+one_hit_names <- inner_join(main, one_hit_wonder, by = 'artists')
+summarise(one_hit_names, name, artists)
+```
+
+It isn't much of a surprise to see these one hit wonders appear on this list. Songs like "Mood", "Whoopty" and "Lonely" are all super 
+well known and popular songs. It will be interesting to see if the these individual artists or groups will collaborate and make some more music together. 
+
+As far as data wrangling and visualization goes I cleaned up my data to first only consist of Artist with only 1 track released, and limited this down to only consist of the top 5 of these "One Hit" artist and plotted this out in barchart format. Next to receive these artist's songs I had to inner join this data set with the by_artist data to receive the song names and I listed those out. 
+  
+  
+**8. How has Post Malone's (Tanner's favorite artist) popularity changed over the past few years?**
+```{r message=FALSE, warning=FALSE}
+dat <- main %>%
+       group_by(year = year, artists = artists) %>%
+       summarise(popularity = mean(popularity)) %>%
+       filter(artists == "['Post Malone']")
+
+ggplot(dat, aes(x = year, weight = popularity)) + geom_bar() + ylab('Popularity') + coord_cartesian(ylim=c(60, 80))
+```
+ 
+It was interesting to see the popularity of Post Malone to gradually increase in the years that he released his albums. 
+He dropped his first album in 2016, another in 2018, and his latest one was in 2019. With each one he obviously is gaining 
+more and more fans and it will be interesting to see his popularity after he releases his next album.
+
+Cleaning up my data to only include necessary information I grouped by year and artist and filtered down to only include the
+artist I was interested in. To visualize the artist popularity over the past few years I plotted this out in barchart format. 
+  
+  
+**9. What are/were the most popular genres in the past century?**
+```{r message=FALSE, warning=FALSE}
+library(scales)
+
+q9 <- by_genre %>%
+       group_by(genres = genres) %>%
+       summarise(popularity = mean(popularity)) %>%
+       top_n(10, wt = popularity)%>%
+       arrange(desc(popularity))
+q9
+
+
+ggplot(q9, aes(x=reorder(genres,popularity), y = popularity)) + geom_point(col="blue", size =3) +
+       geom_segment(aes(x=genres, xend = genres, y = min(popularity), yend = max(popularity)), linetype="dashed", size=.25) + 
+       labs(title = "Most Popular Genres", x='Genres') + 
+       coord_flip()
+```
+  
+When thinking about popular genres, there are a few big ones that come to mind like Pop, Rap, or Country. It was super interesting looking 
+at the most popular genres currently and I was very surprised by the results. The list included mostly genre's that I haven't heard of like Chinese
+Electropop, and Irish Rap. This question really got me to question what exactly is going on behind Spotify's Popularity algorithm. According to the 
+dataset creator it is "a measurement of total streams as well as how recent these streams are". 
+
+To get down to the relevant data I started out by grouping by genre, summarizing popularity as the mean popularity of the genre, and pulled out 
+the top 10 most popular from this set in descending order. Then to visualize I used a ggplot, plotting the specific genre's popularity as a point. 
+To enhance this graph I used geom_segment to size the graph appropriately and add horizontal dashed lines to make which I felt made it easier
+to read. 
+  
+  
+### **Conclusion**
+**Overall, we all have concluded that...**
+
+- Music trends and the taste of music listeners changes a lot over time!
+- There are many different topics with interesting datasets to explore
+- 
+-
+-
+
+
+### **Contribution Statement**
+
+**MyTien Kien**
+
+MyTien is the team coordinator for Group 4. With that, she helped supervise everyone by making sure they contributed to the presentation, proposal, analysis and the report. She was in charge of making sure that everything was done neatly and in a timely manner. She contributed to the overall analysis by looking at the comparison between two years in terms of music patterns, as well as analyzing the trends given throughout the past century (Questions 3 & 4).
+
+
+**Saketh Jonnadula**
+
+Saketh was in charge of questions 1 and 2.
+
+
+**Tanner Dunn**
+
+Tanner was in charge of questions 7, 8, and 9 as well as finding the best data set as this topic was the one the he proposed. He contributed to the overall analysis by analyzing the most successful one hit wonders, exploring the popularity change in his favorite artist and lastly, analyzed the most popular genres. 
+
+
+**Ryan Pate**
+
+Ryan was in charge of questions 5 and 6, which contributed to the analysis by looking at the relationships between different variables of music, as well as exploring the popularity of explicit versus non-explicit music.
+
